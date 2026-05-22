@@ -4,6 +4,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>陶芸記録</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
@@ -11,7 +14,7 @@
       <section class="workspace">
         <header class="topbar">
           <div>
-            <p class="kicker">Pottery Studio Log</p>
+            <p class="kicker">Ceramic Archive</p>
             <h1>陶芸記録</h1>
           </div>
           <div class="summary" aria-label="記録サマリー">
@@ -32,14 +35,33 @@
 
         <section class="entry-panel" aria-labelledby="formTitle">
           <div class="panel-heading">
-            <h2 id="formTitle">新しい作品</h2>
+            <div>
+              <p class="panel-kicker">Start with photo</p>
+              <h2 id="formTitle">新しい作品</h2>
+            </div>
             <button class="ghost-button" type="button" id="resetButton">リセット</button>
           </div>
 
           <form id="recordForm" autocomplete="off">
             <input type="hidden" id="editingId">
+            <div class="photo-field">
+              <div>
+                <span class="field-label">写真</span>
+                <p>撮った写真を選んでから、作品情報を残します。</p>
+              </div>
+              <div class="photo-controls">
+                <label class="photo-picker">
+                  写真を選ぶ
+                  <input id="photoInput" name="photoInput" type="file" accept="image/*">
+                </label>
+                <button class="ghost-button" type="button" id="removePhotoButton">写真を外す</button>
+              </div>
+              <div class="photo-preview" id="photoPreview" aria-label="選択中の写真プレビュー">
+                <span>写真なし</span>
+              </div>
+            </div>
             <div class="form-grid">
-              <label>
+              <label class="wide-field">
                 作品名
                 <input id="title" name="title" required placeholder="例: 粉引きの飯碗">
               </label>
@@ -75,22 +97,6 @@
                 サイズ
                 <input id="size" name="size" placeholder="例: 直径12cm 高さ6cm">
               </label>
-            </div>
-            <div class="photo-field">
-              <div>
-                <span class="field-label">写真</span>
-                <p>スマホやPCから作品写真を選べます。</p>
-              </div>
-              <div class="photo-controls">
-                <label class="photo-picker">
-                  写真を選ぶ
-                  <input id="photoInput" name="photoInput" type="file" accept="image/*">
-                </label>
-                <button class="ghost-button" type="button" id="removePhotoButton">写真を外す</button>
-              </div>
-              <div class="photo-preview" id="photoPreview" aria-label="選択中の写真プレビュー">
-                <span>写真なし</span>
-              </div>
             </div>
             <label class="notes-field">
               メモ
