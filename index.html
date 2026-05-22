@@ -75,10 +75,22 @@
                 サイズ
                 <input id="size" name="size" placeholder="例: 直径12cm 高さ6cm">
               </label>
-              <label>
-                写真URL
-                <input id="photo" name="photo" type="url" placeholder="https://...">
-              </label>
+            </div>
+            <div class="photo-field">
+              <div>
+                <span class="field-label">写真</span>
+                <p>スマホやPCから作品写真を選べます。</p>
+              </div>
+              <div class="photo-controls">
+                <label class="photo-picker">
+                  写真を選ぶ
+                  <input id="photoInput" name="photoInput" type="file" accept="image/*">
+                </label>
+                <button class="ghost-button" type="button" id="removePhotoButton">写真を外す</button>
+              </div>
+              <div class="photo-preview" id="photoPreview" aria-label="選択中の写真プレビュー">
+                <span>写真なし</span>
+              </div>
             </div>
             <label class="notes-field">
               メモ

@@ -9,6 +9,8 @@ const stageFilter = document.querySelector("#stageFilter");
 const resetButton = document.querySelector("#resetButton");
 const saveButton = document.querySelector("#saveButton");
 const formTitle = document.querySelector("#formTitle");
+const photoPreview = document.querySelector("#photoPreview");
+const removePhotoButton = document.querySelector("#removePhotoButton");
 
 const fields = {
   editingId: document.querySelector("#editingId"),
@@ -19,7 +21,7 @@ const fields = {
   glaze: document.querySelector("#glaze"),
   firing: document.querySelector("#firing"),
   size: document.querySelector("#size"),
-  photo: document.querySelector("#photo"),
+  photoInput: document.querySelector("#photoInput"),
   notes: document.querySelector("#notes")
 };
 
@@ -51,6 +53,7 @@ const sampleRecords = [
 ];
 
 let records = loadRecords();
+let currentPhoto = "";
 
 function makeId() {
   if (globalThis.crypto && typeof globalThis.crypto.randomUUID === "function") {
@@ -75,7 +78,72 @@ function loadRecords() {
 }
 
 function saveRecords() {
-  localStorage.setItem(storageKey, JSON.stringify(records));
+  try {
+    localStorage.setItem(storageKey, JSON.stringify(records));
+    return true;
+  } catch {
+    alert("保存容量がいっぱいです。写真を外すか、不要な記録を削除してからもう一度試してください。");
+    return false;
+  }
+}
+
+function readImage(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.addEventListener("load", () => resolve(reader.result));
+    reader.addEventListener("error", () => reject(reader.error));
+    reader.readAsDataURL(file);
+  });
+}
+
+function loadImage(src) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.addEventListener("load", () => resolve(image));
+    image.addEventListener("error", reject);
+    image.src = src;
+  });
+}
+
+async function preparePhoto(file) {
+  if (!file) return currentPhoto;
+  if (!file.type.startsWith("image/")) {
+    alert("画像ファイルを選んでください。");
+    fields.photoInput.value = "";
+    return currentPhoto;
+  }
+
+  const dataUrl = await readImage(file);
+  const image = await loadImage(dataUrl);
+  const maxSize = 1200;
+  const ratio = Math.min(1, maxSize / Math.max(image.width, image.height));
+  const width = Math.round(image.width * ratio);
+  const height = Math.round(image.height * ratio);
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+
+  canvas.width = width;
+  canvas.height = height;
+  context.drawImage(image, 0, 0, width, height);
+
+  return canvas.toDataURL("image/jpeg", 0.82);
+}
+
+function renderPhotoPreview(photo) {
+  photoPreview.replaceChildren();
+  if (!photo) {
+    const empty = document.createElement("span");
+    empty.textContent = "写真なし";
+    photoPreview.append(empty);
+    removePhotoButton.disabled = true;
+    return;
+  }
+
+  const image = document.createElement("img");
+  image.src = photo;
+  image.alt = "選択中の作品写真";
+  photoPreview.append(image);
+  removePhotoButton.disabled = false;
 }
 
 function formatDate(value) {
@@ -97,7 +165,7 @@ function getFormData() {
     glaze: fields.glaze.value.trim(),
     firing: fields.firing.value.trim(),
     size: fields.size.value.trim(),
-    photo: fields.photo.value.trim(),
+    photo: currentPhoto,
     notes: fields.notes.value.trim()
   };
 }
@@ -111,7 +179,9 @@ function setFormData(record) {
   fields.glaze.value = record.glaze;
   fields.firing.value = record.firing;
   fields.size.value = record.size;
-  fields.photo.value = record.photo;
+  currentPhoto = record.photo || "";
+  fields.photoInput.value = "";
+  renderPhotoPreview(currentPhoto);
   fields.notes.value = record.notes;
   formTitle.textContent = "作品を編集";
   saveButton.textContent = "更新する";
@@ -121,6 +191,8 @@ function setFormData(record) {
 function clearForm() {
   form.reset();
   fields.editingId.value = "";
+  currentPhoto = "";
+  renderPhotoPreview(currentPhoto);
   fields.madeAt.valueAsDate = new Date();
   formTitle.textContent = "新しい作品";
   saveButton.textContent = "記録する";
@@ -222,13 +294,17 @@ form.addEventListener("submit", (event) => {
   if (!data.title || !data.madeAt) return;
 
   const index = records.findIndex((record) => record.id === data.id);
+  const previousRecords = records;
   if (index >= 0) {
-    records[index] = data;
+    records = records.map((record) => record.id === data.id ? data : record);
   } else {
     records = [data, ...records];
   }
 
-  saveRecords();
+  if (!saveRecords()) {
+    records = previousRecords;
+    return;
+  }
   renderRecords();
   clearForm();
 });
@@ -236,6 +312,28 @@ form.addEventListener("submit", (event) => {
 resetButton.addEventListener("click", clearForm);
 searchInput.addEventListener("input", renderRecords);
 stageFilter.addEventListener("change", renderRecords);
+fields.photoInput.addEventListener("change", async () => {
+  const [file] = fields.photoInput.files;
+  if (!file) return;
+
+  saveButton.disabled = true;
+  saveButton.textContent = "写真を準備中...";
+  try {
+    currentPhoto = await preparePhoto(file);
+    renderPhotoPreview(currentPhoto);
+  } catch {
+    alert("写真を読み込めませんでした。別の画像を選んでください。");
+    fields.photoInput.value = "";
+  } finally {
+    saveButton.disabled = false;
+    saveButton.textContent = fields.editingId.value ? "更新する" : "記録する";
+  }
+});
+removePhotoButton.addEventListener("click", () => {
+  currentPhoto = "";
+  fields.photoInput.value = "";
+  renderPhotoPreview(currentPhoto);
+});
 
 clearForm();
 renderRecords();
